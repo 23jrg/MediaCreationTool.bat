@@ -125,4 +125,6 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2022.03.18: fix regression with Auto Upgrade; removed powershell -nop arg (issue #41); enhanced 11 AutoUnattend.xml
 2022.03.20: stable - all issues ironed out; improved script ui; upgrade keeping files from Eval editions too
             last squash I promise ;)
+2025.11.26: testing a 25h2 .cab source
 ```
+
