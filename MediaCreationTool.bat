@@ -48,7 +48,7 @@ set /a UNHIDE_BUSINESS=1
 set /a INSERT_BUSINESS=1
 
 ::# MCT Version choice dialog items and default-index [11_25H2]
-set VERSIONS=1507,1511,1607,1703,1709,1803,1809,1903,1909,20H1,20H2,21H1,21H2,22H2,11_21H2,11_22H2,11_23H2,11_24H2,11_25H2
+set VERSIONS=20H1,20H2,21H1,21H2,22H2,11_21H2,11_22H2,11_23H2,11_24H2,11_25H2
 set /a dV=17
 
 ::# MCT Preset choice dialog items and default-index [Select in MCT]
@@ -65,7 +65,7 @@ for %%s in (%OS_LANGCODE%) do set "OS_LANGCODE=%%s"
 set "OS_ARCH=x64" & if "%PROCESSOR_ARCHITECTURE:~-2%" equ "86" if not defined PROCESSOR_ARCHITEW6432 set "OS_ARCH=x86"
 
 ::# parse MCT choice from script name or commandline - accepts both formats: 1909 or 19H2 etc.
-for %%V in (1.1507 2.1511 3.1607 4.1703 5.1709 6.1803 7.1809 8.1903 8.19H1 9.1909 9.19H2 10.2004 10.20H1 11.2009 11.20H2 12.2104
+for %%V in (10.20H1 11.2009 11.20H2 12.2104
  12.21H1 13.2109 13.21H2 14.2210 14.22H2 15.2110 15.11_21H2 16.2209 16.11_22H2 17.2310 17.11_23H2 18.2409 18.11_24H2 19.2507 19.11_25H2) do for %%s in (%MCT% %~n0 %*) do if /i %%~xV equ .%%~s set "MCT=%%~nV" & set "VID=%%~s"
 if defined MCT if not defined VID set "MCT="
 
