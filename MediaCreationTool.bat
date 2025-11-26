@@ -143,10 +143,10 @@ if %MCT%0 gtr 1 if %PRE%0 lss 1 goto choice-0 = cancel
 goto choice-%MCT%
 
 :choice-19
-set "VER=26200" & set "VID=11_25H2" & set "CB=226200.5074.ge_release_svc_refresh" & set "CT=2025/10/" & set "CC=2.0"
-set "CAB=https://worproject.com/dldserv/esd/products/11/20251012/products.cab"
+set "VER=26200" & set "VID=11_25H2" & set "CB=26200.7171.251111-1701.ge_release_svc_refresh" & set "CT=2025/11/" & set "CC=2.0"
+set "CAB=https://download.microsoft.com/download/8e0c23e7-ddc2-45c4-b7e1-85a808b408ee/Products-Win11-24H2-6B.cab"
 set "EXE=https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/mediacreationtool.exe"
-goto process ::# windows 11 25H2
+goto process ::# windows 11 25H2 - 2025 Update with enablement package (uses 24H2 CAB as they share servicing branch)
 
 :choice-18
 set "VER=26100" & set "VID=11_24H2" & set "CB=26100.4349.250607-1500.ge_release_svc_refresh" & set "CT=2025/06/" & set "CC=2.0"
@@ -687,7 +687,8 @@ pushd "%dir%sources" || (echo "%dir%sources" not found! script should be run fro
 ::# start sources\setup if under winpe (when booted from media) [Shift] + [F10]: c:\auto or d:\auto or e:\auto etc.
 reg query "HKLM\Software\Microsoft\Windows NT\CurrentVersion\WinPE">nul 2>nul && (
  for %%s in (sCPU sRAM sSecureBoot sStorage sTPM) do reg add HKLM\SYSTEM\Setup\LabConfig /f /v Bypas%%sCheck /d 1 /t reg_dword
- start "WinPE" sources\setup.exe & exit /b 
+ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\HwReqChk" /f /v HwReqChkVars /t REG_MULTI_SZ /d "SQ_SecureBootCapable=TRUE\0SQ_SecureBootEnabled=TRUE\0SQ_TpmVersion=2\0SQ_RamMB=8192" /reg:64
+ start "WinPE" sources\setup.exe & exit /b
 ) 
 
 ::# init variables
@@ -769,9 +770,10 @@ reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /f /v DisableWU
 ::# prevent usage of MCT for intermediary upgrade in Dynamic Update (causing 7 to 19H1 instead of 7 to 21H2 for example) 
 if "%Build%" gtr "15063" (set OPTIONS=%OPTIONS% /UpdateMedia Decline)
 
-::# skip windows 11 upgrade checks: add launch option trick if old-style 0-byte file trick is not on the media  
+::# skip windows 11 upgrade checks: add launch option trick if old-style 0-byte file trick is not on the media
 if "%Build%" lss "22000" set /a SKIP_11_SETUP_CHECKS=0
 reg add HKLM\SYSTEM\Setup\MoSetup /f /v AllowUpgradesWithUnsupportedTPMorCPU /d 1 /t reg_dword >nul 2>nul &rem ::# TPM 1.2+ only
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\HwReqChk" /f /v HwReqChkVars /t REG_MULTI_SZ /d "SQ_SecureBootCapable=TRUE\0SQ_SecureBootEnabled=TRUE\0SQ_TpmVersion=2\0SQ_RamMB=8192" /reg:64 >nul 2>nul &rem ::# 24H2/25H2 bypass
 if "%SKIP_11_SETUP_CHECKS%" equ "1" cd.>appraiserres.dll 2>nul & rem ::# writable media only
 for %%A in (appraiserres.dll) do if %%~zA gtr 0 (set TRICK=/Product Server ) else (set TRICK=)
 if "%SKIP_11_SETUP_CHECKS%" equ "1" (set OPTIONS=%TRICK%%OPTIONS%)
@@ -841,15 +843,35 @@ function WIM_INFO ($file = 'install.esd', $index = 0, $out = 0) { :info while ($
    xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    publicKeyToken="31bf3856ad364e35" versionScope="nonSxS">
     <RunSynchronous>
-      <!-- offline local account via OOBE\BYPASSNRO on every site but literally no one credits AveYo for sharing it -->
+      <!-- bypass TPM, Secure Boot, RAM, CPU, and Storage checks for Windows 11 24H2/25H2 -->
       <RunSynchronousCommand wcm:action="add"><Order>1</Order>
+        <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassTPMCheck /t reg_dword /d 1 /f</Path>
+      </RunSynchronousCommand>
+      <RunSynchronousCommand wcm:action="add"><Order>2</Order>
+        <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassSecureBootCheck /t reg_dword /d 1 /f</Path>
+      </RunSynchronousCommand>
+      <RunSynchronousCommand wcm:action="add"><Order>3</Order>
+        <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassRAMCheck /t reg_dword /d 1 /f</Path>
+      </RunSynchronousCommand>
+      <RunSynchronousCommand wcm:action="add"><Order>4</Order>
+        <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassCPUCheck /t reg_dword /d 1 /f</Path>
+      </RunSynchronousCommand>
+      <RunSynchronousCommand wcm:action="add"><Order>5</Order>
+        <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassStorageCheck /t reg_dword /d 1 /f</Path>
+      </RunSynchronousCommand>
+      <!-- additional bypass for Windows 11 24H2/25H2 -->
+      <RunSynchronousCommand wcm:action="add"><Order>6</Order>
+        <Path>reg add HKLM\SYSTEM\Setup\MoSetup /v AllowUpgradesWithUnsupportedTPMorCPU /t reg_dword /d 1 /f</Path>
+      </RunSynchronousCommand>
+      <!-- offline local account via OOBE\BYPASSNRO on every site but literally no one credits AveYo for sharing it -->
+      <RunSynchronousCommand wcm:action="add"><Order>7</Order>
         <Path>reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE /v BypassNRO /t reg_dword /d 1 /f</Path>
       </RunSynchronousCommand>
       <!-- hide unsupported nag on update settings - 25H1 is not a typo ;) -->
-      <RunSynchronousCommand wcm:action="add"><Order>2</Order>
+      <RunSynchronousCommand wcm:action="add"><Order>8</Order>
         <Path>reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate /v TargetReleaseVersion /d 1 /t reg_dword /f</Path>
       </RunSynchronousCommand>
-      <RunSynchronousCommand wcm:action="add"><Order>3</Order>
+      <RunSynchronousCommand wcm:action="add"><Order>9</Order>
         <Path>reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate /v TargetReleaseVersionInfo /d 25H1 /f</Path>
       </RunSynchronousCommand>
     </RunSynchronous>
@@ -1021,7 +1043,7 @@ function PRODUCTS_XML { [xml]$xml = [io.file]::ReadAllText("$pwd\products.xml",[
      }}}
    }
  }
-#:: update existing FilePath entries for 1909, 2004, 2008 and insert entries for 21H2, 22H2, 11_21H2, 11_22H2, 11_23H2, 11_24H2 and 11_25H2
+#:: update existing FilePath entries for 1909, 2004, 2008 and insert entries for 21H2, 22H2, 11_21H2, 11_22H2 and 11_23H2
  if ($insert -and $ver -gt 15063) {
    $items = $csv |group Client,Lang -AsHashTable -AsString
    if ($null -ne $items) {
@@ -1489,4 +1511,3 @@ function PRODUCTS_XML { [xml]$xml = [io.file]::ReadAllText("$pwd\products.xml",[
 ::#,19043,vol,uk-ua,3633073140,2601657108,d3d06977ed2de7352489317563099c80093125cd,c5a6725fc7b6e5e58d680259ab827de6621f919f,d,d
 ::#,19043,vol,zh-cn,3885377254,2847833439,d6cc640b4cbc484e5d41cc966b3e105193c18ffd,dcdcfca5a388059e2db9cb55e950f29282bec529,d,c
 ::#,19043,vol,zh-tw,3856202777,2825194480,fac5d12d42d7aa7bbcad36b1314923a776e1a5c9,ae7a1a1d9212269227330c5298687887a1f5621d,d,d
-
