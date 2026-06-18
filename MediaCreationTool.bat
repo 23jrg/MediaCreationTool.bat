@@ -1,3 +1,9 @@
+REM Prompts the user to re-launch this script with higher elevation
+FSUTIL DIRTY query %SystemDrive% >NUL || (
+    PowerShell "Start-Process -FilePath '%0' -Verb RunAs"
+    EXIT
+)
+
 @goto latest at github.com/AveYo/MediaCreationTool.bat
 :Universal MCT wrapper script for all Windows 10/11 versions from 1507 to 23H2!
 :: Nothing but Microsoft-hosted source links and no third-party tools; script just configures an xml and starts MCT
