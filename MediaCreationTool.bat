@@ -151,7 +151,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$Reg1 = 'REG ADD \"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\" /v DisplayVersion /t REG_SZ /d \"25h2\" /f';" ^
     "$Reg2 = 'REG ADD \"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\" /v CurrentBuild /t REG_SZ /d \"26200\" /f';" ^
     "$DeleteCommand = \"Unregister-ScheduledTask -TaskName '$TaskName' -Confirm:\\$false\";" ^
-    "$Action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument \"/c $Reg1 & $Reg2 & powershell.exe -Command \\\"$DeleteCommand\\\"\";" ^
+    "$Action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument \"/c $Reg1 ^& $Reg2 ^& powershell.exe -Command \\\"$DeleteCommand\\\"\";" ^
     "$Trigger = New-ScheduledTaskTrigger -AtStartup;" ^
     "Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -User 'NT AUTHORITY\SYSTEM' -RunLevel Highest;"
 goto process ::# refreshed 22621 base with integrated 23H2 enablement package
