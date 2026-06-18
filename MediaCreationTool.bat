@@ -152,14 +152,25 @@ goto choice-%MCT%
 set "VER=22631" & set "VID=11_25H2" & set "CB=22631.2861.231204-0538.23H2_ni_release_svc_refresh" & set "CT=2023/12/" & set "CC=2.0"
 set "CAB=https://download.microsoft.com/download/6/2/b/62b47bc5-1b28-4bfa-9422-e7a098d326d4/products_win11_20231208.cab"
 set "EXE=https://download.microsoft.com/download/e/c/d/ecd532eb-bed0-465a-9b7a-330066bec3ce/MediaCreationTool_Win11_23H2.exe"
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$TaskName = 'RegUpdateOnReboot';" ^
-    "$Reg1 = 'REG ADD \"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\" /v DisplayVersion /t REG_SZ /d \"25h2\" /f';" ^
-    "$Reg2 = 'REG ADD \"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\" /v CurrentBuild /t REG_SZ /d \"26200\" /f';" ^
-    "$DeleteCommand = \"Unregister-ScheduledTask -TaskName '$TaskName' -Confirm:\\$false\";" ^
-    "$Action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument \"/c $Reg1 ^& $Reg2 ^& powershell.exe -Command \\\"$DeleteCommand\\\"\";" ^
-    "$Trigger = New-ScheduledTaskTrigger -AtStartup;" ^
-    "Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -User 'NT AUTHORITY\SYSTEM' -RunLevel Highest;"
+set TASKNAME=SetWindowsVersionInfo
+set SCRIPT=%ProgramData%\SetWindowsVersionInfo.cmd
+
+(
+echo @echo off
+echo reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v DisplayVersion /t REG_SZ /d 25H2 /f
+echo reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v CurrentBuild /t REG_SZ /d 26200 /f
+echo schtasks /delete /tn "%TASKNAME%" /f
+echo del "%%~f0"
+) > "%SCRIPT%"
+
+schtasks /create ^
+/tn "%TASKNAME%" ^
+/sc ONSTART ^
+/ru SYSTEM ^
+/rl HIGHEST ^
+/tr ""%SCRIPT%"" ^
+/f
+
 goto process ::# refreshed 22621 base with integrated 23H2 enablement package
 
 :choice-17
